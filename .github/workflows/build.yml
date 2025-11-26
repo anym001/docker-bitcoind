@@ -78,11 +78,3 @@ jobs:
           file: ./docker/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/bitcoind:${{ env.BITCOIN_VERSION }}
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Cosign keyless sign
-        run: |
-          cosign sign \
-            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ env.BITCOIN_VERSION }}
