@@ -1,56 +1,90 @@
-name: Create branches for Bitcoin Core releases
+name: Auto Create Version Branch
 
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: read
+
 jobs:
-  prepare:
-    name: Prepare tag list
+  check-version:
     runs-on: ubuntu-latest
-    outputs:
-      tags: ${{ steps.collect-tags.outputs.tags }}
+
     steps:
-      - name: Collect tags
-        id: collect-tags
-        run: |
-          TAGS_JSON=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases \
-            | jq -c '[.[].tag_name 
-                  | select(test("^v([2-9][89]|[3-9][0-9])\\.[0-9]+$|^v28\\.[0-9]+$|^v29\\.[0-9]+$|^v30\\.[0-9]+$"))]')
-
-          if [ -z "$TAGS_JSON" ] || [ "$TAGS_JSON" = "null" ]; then
-            TAGS_JSON="[]"
-          fi
-
-          echo "Collected tags: $TAGS_JSON"
-          echo "tags=$TAGS_JSON" >> "$GITHUB_OUTPUT"
-
-  create-branch:
-    needs: prepare
-    runs-on: ubuntu-latest
-    if: ${{ needs.prepare.outputs.tags != '[]' }}
-    
-    strategy:
-      matrix:
-        tag: ${{fromJson(needs.prepare.outputs.tags)}}
-        
-    steps:
-      - name: Checkout repo
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GHCR_PAT }}
+          fetch-depth: 0
 
-      - name: Check if branch exists
-        id: branch_exists
-        uses: GuillaumeFalourd/branch-exists@v1.1
-        with:
-          branch: ${{ matrix.tag }}
-
-      - name: Create branch if missing
-        if: steps.branch_exists.outputs.exists == 'false'
+      - name: Fetch latest Bitcoin Core releases
+        id: fetch
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git checkout -b ${{ matrix.tag }}
-          git push origin ${{ matrix.tag }}
+          RELEASES=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases)
+
+          VALID_TAG=$(
+            echo "$RELEASES" | jq -r '
+              [ .[].tag_name
+                | select(test("^v[0-9]+\\.[0-9]+$"))                   # standard releases
+                | select( (sub("^v";"") | tonumber) >= 28.0 )          # only >= v28.0
+              ][0]'
+          )
+
+          echo "valid_tag=$VALID_TAG" >> $GITHUB_OUTPUT
+
+      - name: Stop if no valid release found
+        if: ${{ steps.fetch.outputs.valid_tag == '' }}
+        run: |
+          echo "No valid >=28.0, non-RC release found."
+          exit 0
+
+      - name: Check if version branch already exists
+        id: branch
+        run: |
+          VERSION="${{ steps.fetch.outputs.valid_tag }}"
+          if git ls-remote --heads origin "$VERSION" | grep "$VERSION" > /dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if branch already exists
+        if: steps.branch.outputs.exists == 'true'
+        run: echo "Branch already exists — nothing to do."
+
+      - name: Check if Docker image already exists in GHCR
+        id: ghcr
+        run: |
+          VERSION="${{ steps.fetch.outputs.valid_tag }}"
+          IMAGE="ghcr.io/${{ github.repository }}:$VERSION"
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://ghcr.io/v2/${{ github.repository }}/manifests/$VERSION)
+
+          if [ "$STATUS" -eq 200 ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if Docker image already exists
+        if: steps.ghcr.outputs.exists == 'true'
+        run: echo "Docker image already exists in GHCR — nothing to do."
+
+      - name: Create version branch with build workflow
+        if: steps.branch.outputs.exists == 'false' && steps.ghcr.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.fetch.outputs.valid_tag }}"
+          echo "Creating new version branch: $VERSION"
+
+          git checkout -b "$VERSION"
+
+          mkdir -p .github/workflows
+          cp .github/workflows/build.yml .github/workflows/build.yml
+
+          git add .github/workflows/build.yml
+          git commit -m "Add build workflow for version $VERSION"
+          git push origin "$VERSION"
