@@ -1,4 +1,4 @@
-name: Update Bitcoin Version Branch
+name: Create branches for Bitcoin Core releases (from v28.0)
 
 on:
   schedule:
@@ -14,14 +14,16 @@ jobs:
       - name: Get all Bitcoin Core release tags (only v28.0+)
         id: get_tags
         run: |
-          RELEASES=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases | jq -r '.[].tag_name' | awk -F'[v.]' '{if ($2 >= 28) print $0}')
-          echo "RELEASES=${RELEASES}" >> $GITHUB_ENV
+          TAGS_JSON=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases | \
+            jq '[.[].tag_name | select(test("^v([2-9][89]|[3-9][0-9])\\.[0-9]+$|^v28\\.[0-9]+$|^v29\\.[0-9]+$|^v30\\.[0-9]+$"))]')
+          echo "TAGS_JSON=${TAGS_JSON}" >> $GITHUB_ENV
+        shell: bash
 
       - name: Set output tags
         id: set-tags
         run: |
-          TAGS_JSON=$(echo "$RELEASES" | jq -R -s 'split("\n")[:-1]')
-          echo "::set-output name=tags::$TAGS_JSON"
+          echo "::set-output name=tags::${TAGS_JSON}"
+        shell: bash
 
   create-branch:
     needs: prepare
