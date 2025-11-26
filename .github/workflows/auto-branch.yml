@@ -23,7 +23,7 @@ jobs:
       - name: Check if branch exists
         id: branch_check
         run: |
-          git fetch origin
+          git fetch --all
           if git show-ref --verify --quiet refs/heads/${LATEST_RELEASE}; then
             echo "Branch exists"
             echo "BRANCH_EXISTS=true" >> $GITHUB_ENV
