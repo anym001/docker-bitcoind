@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - v*
+  create:
+    branches:
+      - v*
   workflow_dispatch:
 
 jobs:
