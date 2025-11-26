@@ -15,10 +15,10 @@ jobs:
         id: get_tags
         run: |
           TAGS_JSON=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases \
-            | jq '[.[].tag_name 
+            | jq -c '[.[].tag_name 
                   | select(test("^v([2-9][89]|[3-9][0-9])\\.[0-9]+$|^v28\\.[0-9]+$|^v29\\.[0-9]+$|^v30\\.[0-9]+$"))]')
           if [ -z "$TAGS_JSON" ] || [ "$TAGS_JSON" == "" ]; then TAGS_JSON="[]"; fi
-          echo "${TAGS_JSON}" > tags.json
+          echo "tags=${TAGS_JSON}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Set output tags
