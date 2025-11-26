@@ -6,7 +6,7 @@ This repository provides automated Docker images for Bitcoin Core (bitcoind), bu
 
 - Fully automated build system using GitHub Actions
 - Automatic detection of new Bitcoin Core versions
-- Automatic creation of a new branch for every version (v27.0, v28.1, v30.0, etc.)
+- Automatic creation of a new branch for every version (v28.0, v28.1, v30.0, etc.)
 - Docker images built per branch
 - Cosign signing for all pushed images
 - Images pushed to GitHub Container Registry (GHCR)
@@ -16,7 +16,7 @@ This repository provides automated Docker images for Bitcoin Core (bitcoind), bu
 
 Every Bitcoin Core version is stored in its own branch:
 
-- v27.0
+- v28.0
 - v28.1
 - v29.2
 - v30.0
