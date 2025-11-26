@@ -1,4 +1,4 @@
-name: Create branches for Bitcoin Core releases (from v28.0)
+name: Create branches for Bitcoin Core releases
 
 on:
   schedule:
@@ -43,7 +43,7 @@ jobs:
 
       - name: Check if branch exists
         id: branch_exists
-        uses: GuillaumeFalourd/branch-exists@v1.2
+        uses: GuillaumeFalourd/branch-exists@v1.1
         with:
           branch: ${{ matrix.tag }}
 
