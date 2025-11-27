@@ -82,3 +82,28 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.version.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.version.outputs.major_version }}-stable
+
+      - name: Create release tag
+        if: startsWith(github.ref, 'refs/heads/v')
+        run: |
+          VERSION="${GITHUB_REF##*/}"
+  
+          if git ls-remote --tags origin | grep -q "refs/tags/${VERSION}$"; then
+            echo "Tag ${VERSION} already exists → OK"
+            exit 0
+          fi
+  
+          echo "Creating tag ${VERSION}"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+  
+          git tag "$VERSION"
+          git push origin "$VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/v')
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "Bitcoin Core (Docker Image) ${{ steps.version.outputs.version }}"
+          generate_release_notes: true
