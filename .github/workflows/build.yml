@@ -3,10 +3,9 @@ name: Build & Sign Bitcoind Image
 on:
   push:
     branches:
-      - v*
-  create:
-    branches:
-      - v*
+      'v*.*'
+    paths:
+      - 'Dockerfile'
   workflow_dispatch:
 
 jobs:
