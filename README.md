@@ -8,7 +8,7 @@ Run a Bitcoin Core node:
 ```
 docker run -d \
   --name bitcoind \
-  -v /your/data/dir:/bitcoin/.bitcoin \
+  -v /your/data/dir:/home/bitcoin/.bitcoin \
   -p 8332:8332 \
   -p 8333:8333 \
   ghcr.io/anym001/bitcoind:<version>
@@ -18,7 +18,7 @@ docker run -d \
 
 Place optional config in:
 ```
-/bitcoin/.bitcoin/bitcoin.conf
+/home/bitcoin/.bitcoin/bitcoin.conf
 ```
 
 **Contributing**
