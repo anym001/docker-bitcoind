@@ -1,0 +1,52 @@
+name: Auto-create Version Branch
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  create-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install jq
+      run: sudo apt-get update && sudo apt-get install -y jq
+        
+    - name: Fetch latest Bitcoin Core releases
+        id: releases
+        run: |
+        curl -s https://api.github.com/repos/bitcoin/bitcoin/releases \
+          | jq -r '.[].tag_name' \
+          | grep -E '^v(2[7-9]|[3-9][0-9])\.[0-9]+$' \
+          | grep -vE 'rc[0-9]+$' \
+          | sort -V \
+          > filtered_tags.txt
+
+        echo "Filtered versions:"
+        cat filtered_tags.txt
+
+    - name: Create missing version branches
+      run: |
+        while read -r TAG; do
+          [ -z "$TAG" ] && continue
+
+          if git ls-remote --heads origin "$TAG" | grep "$TAG" >/dev/null; then
+            echo "Branch $TAG exists → OK"
+            continue
+          fi
+
+          echo "Creating new version branch: $TAG"
+
+          git checkout main
+          git pull --rebase
+
+          git checkout -b "$TAG"
+          git push origin "$TAG"
+
+          echo "Created and pushed $TAG"
+
+        done < filtered_tags.txt
