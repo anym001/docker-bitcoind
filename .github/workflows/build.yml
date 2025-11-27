@@ -98,7 +98,7 @@ jobs:
           git config user.email "github-actions@github.com"
   
           git tag "$VERSION"
-          git push origin "$VERSION"
+          git push origin "refs/tags/$VERSION"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
