@@ -15,16 +15,23 @@ jobs:
 
     - name: Install jq
       run: sudo apt-get update && sudo apt-get install -y jq
+
+    - name: Configure Git user
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
         
     - name: Fetch latest Bitcoin Core releases
       id: releases
       run: |
         curl -s https://api.github.com/repos/bitcoin/bitcoin/releases \
-          | jq -r '.[].tag_name' > tags.txt
+          | jq -r '.[].tag_name' \
+          | grep -E '^v(2[8-9]|[3-9][0-9])\.[0-9]+$' \
+          | grep -vE 'rc[0-9]+$' \
+          | sort -V \
+          > filtered_tags.txt
 
-        grep -E '^v([2-9][8-9]|[3-9][0-9])\.[0-9]+$' tags.txt | sort -V > filtered_tags.txt
-
-        echo "Branches to build:"
+        echo "Filtered versions:"
         cat filtered_tags.txt
 
     - name: Create missing version branches
