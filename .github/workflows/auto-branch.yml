@@ -26,7 +26,7 @@ jobs:
       run: |
         curl -s https://api.github.com/repos/bitcoin/bitcoin/releases \
           | jq -r '.[].tag_name' \
-          | grep -E '^v(2[8-9]|[3-9][0-9])\.[0-9]+$' \
+          | grep -E '^v(2[7-9]|[3-9][0-9])\.[0-9]+$' \
           | grep -vE 'rc[0-9]+$' \
           | sort -V \
           > filtered_tags.txt
