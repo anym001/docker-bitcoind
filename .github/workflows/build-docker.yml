@@ -31,9 +31,13 @@ jobs:
           VERSION="${{ github.event.inputs.VERSION }}"
           LATEST="${{ github.event.inputs.LATEST }}"
           SHORT_VERSION="${VERSION#v}"
+          MAJOR_VERSION="${SHORT_VERSION%%.*}"
+
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
           echo "LATEST=$LATEST" >> $GITHUB_OUTPUT
+          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
+          echo "MAJOR_VERSION=$MAJOR_VERSION" >> $GITHUB_OUTPUT
+
           ASSET="bitcoin-${SHORT_VERSION}-x86_64-linux-gnu.tar.gz"
           echo "ASSET=$ASSET" >> $GITHUB_OUTPUT
 
@@ -85,7 +89,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.versions.outputs.SHORT_VERSION }}
-            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.versions.outputs.SHORT_VERSION }}-stable
+            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.versions.outputs.MAJOR_VERSION }}-stable
 
       - name: Build & push Docker image (latest)
         if: ${{ steps.versions.outputs.LATEST == 'true' }}
