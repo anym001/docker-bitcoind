@@ -25,7 +25,7 @@ jobs:
           sudo apt-get install -y jq curl
 
       - name: Get official releases and current releases
-        id: get_versions
+        id: versions
         run: |
           OFFICIAL_VERSIONS=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases \
             | jq -r '.[].tag_name' \
@@ -50,15 +50,16 @@ jobs:
             exit 1
           fi
 
-          echo "OFFICIAL_VERSIONS=$OFFICIAL_VERSIONS" >> $GITHUB_ENV
-          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
-          echo "CURRENT_VERSIONS=$CURRENT_VERSIONS" >> $GITHUB_ENV
+          echo "OFFICIAL_VERSIONS=$OFFICIAL_VERSIONS" >> $GITHUB_OUTPUT
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "CURRENT_VERSIONS=$CURRENT_VERSIONS" >> $GITHUB_OUTPUT
 
       - name: Determine versions to build
+        id: determine_builds
         run: |
           VERSIONS_TO_BUILD=""
-          for v in $OFFICIAL_VERSIONS; do
-            if [[ ! " $CURRENT_VERSIONS " =~ " $v " ]]; then
+          for v in ${{ steps.versions.outputs.OFFICIAL_VERSIONS }}; do
+            if [[ ! " ${{ steps.versions.outputs.CURRENT_VERSIONS }} " =~ " $v " ]]; then
               VERSIONS_TO_BUILD="$VERSIONS_TO_BUILD $v"
             fi
           done
@@ -68,12 +69,12 @@ jobs:
             exit 0
           fi
 
-          echo "VERSIONS_TO_BUILD=$VERSIONS_TO_BUILD" >> $GITHUB_ENV
+          echo "VERSIONS_TO_BUILD=$VERSIONS_TO_BUILD" >> $GITHUB_OUTPUT
 
       - name: Trigger builds for new versions
         run: |
-          for v in $VERSIONS_TO_BUILD; do
-            if [ "$v" == "$LATEST_VERSION" ]; then
+          for v in ${{ steps.determine_builds.outputs.VERSIONS_TO_BUILD }}; do
+            if [ "$v" == "${{ steps.versions.outputs.LATEST_VERSION }}" ]; then
               LATEST_FLAG=true
             else
               LATEST_FLAG=false
@@ -82,7 +83,7 @@ jobs:
             echo "Triggering build for version $v (LATEST=$LATEST_FLAG)"
             curl -X POST \
               -H "Accept: application/vnd.github+json" \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Authorization: token ${{ secrets.GHCR_PAT }}" \
               https://api.github.com/repos/${{ github.repository }}/actions/workflows/build-docker.yml/dispatches \
               -d "{\"ref\":\"main\",\"inputs\":{\"VERSION\":\"v$v\",\"LATEST\":\"$LATEST_FLAG\"}}"
           done
