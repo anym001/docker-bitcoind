@@ -9,7 +9,7 @@ jobs:
   check_releases:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       id-token: write
 

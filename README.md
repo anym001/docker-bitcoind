@@ -1,10 +1,11 @@
 # Bitcoind Docker Images
 
-This repository provides automated, verified, and signed Docker images for Bitcoin Core (bitcoind).  
-Each version of Bitcoin Core is built from a dedicated branch (`v30.0`, `v29.2`, etc.).  
+This repository provides automated, verified, and signed Docker images for Bitcoin Core (bitcoind).
+Images are built for all official releases starting from v28.0 and pushed to GitHub Container Registry (GHCR).
 All binaries are verified using the official SHA256SUMS and signed checksums.
 
-Images are built automatically via GitHub Actions and pushed to GHCR.
+The workflow automatically detects new releases from bitcoin/bitcoin and triggers the Docker build. 
+The latest tag is set only for the newest official release.
 
 ## 🚀 Usage
 
@@ -18,6 +19,11 @@ docker run -d \
   -p 8332:8332 \
   ghcr.io/anyp001/bitcoind:<version>
 ```
+
+Tags:
+- ```<version>``` → e.g., 29.2, 30.0 (always built for each release)
+- ```<version>-stable``` → e.g., 29-stable, 30-stable
+- ```latest``` → points to the latest official release
 
 ## ⚙️ Configuration
 
@@ -43,24 +49,23 @@ This image is designed with safety in mind:
 
 ## 🏗️ Automated Build System
 
-The CI pipeline performs:
-1. Determine version from branch name (v30.0, etc.)
-2. Download official Bitcoin Core binaries
-3. Import builder keys
-4. Verify:
-    - Signature (SHA256SUMS.asc)
-    - Hashes (sha256sum)
-5. Extract only required binaries (bitcoind, bitcoin-cli)
-6. Build the Docker image
-7. Push image to GHCR:
-    - ghcr.io/<user>/bitcoind:<version>
-    - ghcr.io/<user>/bitcoind:<major>-stable
-8. Create GitHub Release + tag automatically
+1. release-check.yml workflow:
+    - Checks all official Bitcoin Core releases
+    - Determines which releases are missing in your repo
+    - Triggers build-docker.yml for missing releases
+    - Passes LATEST=true for the newest release
+
+2. build-docker.yml workflow:
+    - Downloads official binaries and verifies SHA256 + PGP signatures
+    - Extracts required binaries (bitcoind, bitcoin-cli)
+    - Builds and pushes Docker images to GHCR
+    - Creates a GitHub Release for each version
 
 ## 🤝 Contributing
 
 PRs are welcome, especially improvements to:
-- Docker hardening
-- CI verification steps
+- Docker security hardening
+- Improving automated workflows
+- Enhancing testing or verification
 - Image signing and supply-chain security
 - Documentation
