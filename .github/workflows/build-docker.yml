@@ -1,0 +1,104 @@
+name: Build & Push Bitcoind Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: 'Bitcoin Core version (e.g., v30.0)'
+        required: true
+      LATEST:
+        description: 'Set to true to tag this image as latest'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set version variables
+        run: |
+          VERSION="${{ github.event.inputs.VERSION }}"
+          LATEST="${{ github.event.inputs.LATEST }}"
+          SHORT_VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_ENV
+          echo "LATEST=$LATEST" >> $GITHUB_ENV
+          ASSET="bitcoin-${SHORT_VERSION}-x86_64-linux-gnu.tar.gz"
+          echo "ASSET=$ASSET" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg curl xz-utils tar coreutils
+
+      - name: Download Bitcoin Core binaries
+        run: |
+          BASE="https://bitcoincore.org/bin/bitcoin-core-${SHORT_VERSION}"
+          curl -fSL -O ${BASE}/${ASSET}
+          curl -fSL -O ${BASE}/SHA256SUMS
+          curl -fSL -O ${BASE}/SHA256SUMS.asc
+
+      - name: Import builder keys
+        run: |
+          git clone --depth 1 https://github.com/bitcoin-core/guix.sigs.git
+          gpg --import guix.sigs/builder-keys/* || true
+
+      - name: Verify signatures
+        run: gpg --verify SHA256SUMS.asc SHA256SUMS
+
+      - name: Verify checksum
+        run: |
+          grep "${ASSET}" SHA256SUMS > CHECK_THIS
+          sha256sum -c CHECK_THIS --ignore-missing
+
+      - name: Extract binaries
+        run: |
+          mkdir -p bin
+          tar -xzf $ASSET --strip-components=2 -C bin
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push Docker images (version tags)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/bitcoind:${SHORT_VERSION}
+            ghcr.io/${{ github.repository_owner }}/bitcoind:${SHORT_VERSION}-stable
+
+      - name: Build & push Docker image (latest)
+        if: env.LATEST == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/bitcoind:latest
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: $VERSION
+          name: "Bitcoin Core Docker $VERSION"
+          generate_release_notes: true
