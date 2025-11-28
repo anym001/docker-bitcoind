@@ -26,15 +26,16 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set version variables
+        id: versions
         run: |
           VERSION="${{ github.event.inputs.VERSION }}"
           LATEST="${{ github.event.inputs.LATEST }}"
           SHORT_VERSION="${VERSION#v}"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_ENV
-          echo "LATEST=$LATEST" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
+          echo "LATEST=$LATEST" >> $GITHUB_OUTPUT
           ASSET="bitcoin-${SHORT_VERSION}-x86_64-linux-gnu.tar.gz"
-          echo "ASSET=$ASSET" >> $GITHUB_ENV
+          echo "ASSET=$ASSET" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         run: |
@@ -43,8 +44,8 @@ jobs:
 
       - name: Download Bitcoin Core binaries
         run: |
-          BASE="https://bitcoincore.org/bin/bitcoin-core-${SHORT_VERSION}"
-          curl -fSL -O ${BASE}/${ASSET}
+          BASE="https://bitcoincore.org/bin/bitcoin-core-${{ steps.versions.outputs.SHORT_VERSION }}"
+          curl -fSL -O ${BASE}/${{ steps.versions.outputs.ASSET }}}
           curl -fSL -O ${BASE}/SHA256SUMS
           curl -fSL -O ${BASE}/SHA256SUMS.asc
 
@@ -83,11 +84,11 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bitcoind:${SHORT_VERSION}
-            ghcr.io/${{ github.repository_owner }}/bitcoind:${SHORT_VERSION}-stable
+            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.versions.outputs.SHORT_VERSION }}
+            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.versions.outputs.SHORT_VERSION }}-stable
 
       - name: Build & push Docker image (latest)
-        if: env.LATEST == 'true'
+        if: ${{ steps.versions.outputs.LATEST }} == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -99,6 +100,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: $VERSION
-          name: "Bitcoin Core Docker $VERSION"
+          tag_name: ${{ steps.versions.outputs.VERSION }}
+          name: "Bitcoin Core Docker ${{ steps.versions.outputs.VERSION }}"
           generate_release_notes: true
