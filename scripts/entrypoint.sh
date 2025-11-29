@@ -29,12 +29,6 @@ if [ ! -d "$DATA_DIR/blocks" ]; then
     chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
 fi
 
-# Run initializer only if it exists
-if [ -x /opt/scripts/init-bitcoind.sh ]; then
-    export TARGET_UID TARGET_GID APP_USER DATA_DIR
-    /opt/scripts/init-bitcoind.sh
-fi
-
 # If no command was specified → default = bitcoind
 if [[ $# -eq 0 ]]; then
     set -- bitcoind -printtoconsole
@@ -50,5 +44,5 @@ if [ -n "${BITCOIN_EXTRA_ARGS:-}" ]; then
     set -- "$@" ${BITCOIN_EXTRA_ARGS}
 fi
 
-echo "Starting Bitcoin as UID:$TARGET_UID GID:$TARGET_GID"
+echo "Starting bitcoind as UID:$TARGET_UID GID:$TARGET_GID"
 exec gosu "$TARGET_UID:$TARGET_GID" "$@"
