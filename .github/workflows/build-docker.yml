@@ -88,8 +88,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.versions.outputs.SHORT_VERSION }}
-            ghcr.io/${{ github.repository_owner }}/bitcoind:${{ steps.versions.outputs.MAJOR_VERSION }}-stable
+            ghcr.io/${{ github.repository }}:${{ steps.versions.outputs.SHORT_VERSION }}
+            ghcr.io/${{ github.repository }}:${{ steps.versions.outputs.MAJOR_VERSION }}-stable
 
       - name: Build & push Docker image (latest)
         if: ${{ steps.versions.outputs.LATEST == 'true' }}
@@ -99,7 +99,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bitcoind:latest
+            ghcr.io/${{ github.repository }}:latest
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
