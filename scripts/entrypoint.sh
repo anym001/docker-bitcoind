@@ -31,6 +31,7 @@ if [ -z "$(ls -A "$DATA_DIR")" ] || [ "$CURRENT_UID" != "$TARGET_UID" ] || [ "$C
     echo "Fixing ownership and permissions of DATA_DIR..."
     chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
     chmod "$DATA_PERM" "$DATA_DIR"
+    chmod g+s "$DATA_DIR"
 fi
 
 # If no command was specified → default = bitcoind
