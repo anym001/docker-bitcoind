@@ -1,6 +1,7 @@
 FROM debian:stable-slim
 
 ENV APP_USER=bitcoin \
+	APP_USER_HOME=/home/bitcoin \
     DATA_DIR=/home/bitcoin/.bitcoin \
     DATA_PERM=2770 \
     UMASK=002 \
@@ -11,7 +12,7 @@ RUN apt-get update \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -d ${DATA_DIR} -s /usr/sbin/nologin ${APP_USER} \
+RUN useradd -m -d ${APP_USER_HOME} -s /usr/sbin/nologin ${APP_USER} \
 	&& mkdir -p ${DATA_DIR} \
 	&& chown -R ${APP_USER}:${APP_USER} ${DATA_DIR} \
     && chmod ${DATA_PERM} ${DATA_DIR}
