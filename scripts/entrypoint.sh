@@ -25,9 +25,16 @@ mkdir -p "$DATA_DIR"
 
 # If directory is empty or fresh, fix ownership + perms
 if [ ! -d "$DATA_DIR/blocks" ]; then
-    echo "Initializing data dir ownership and permissions..."
+    echo "Initializing DATA_DIR ownership and permissions..."
     chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
     chmod "$DATA_PERM" "$DATA_DIR"
+fi
+
+# If UID change, fix ownership
+CURRENT_UID=$(stat -c %u "$DATA_DIR")
+if [ "$CURRENT_UID" != "$TARGET_UID" ]; then
+    echo "Fixing ownership of DATA_DIR (UID mismatch) ..."
+    chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
 fi
 
 # If no command was specified → default = bitcoind
