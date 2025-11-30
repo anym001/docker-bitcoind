@@ -20,13 +20,14 @@ if [ "$(id -u "$APP_USER")" != "$TARGET_UID" ]; then
     usermod -o -u "$TARGET_UID" "$APP_USER"
 fi
 
-# Ensure data directory exists
+# Ensure datadir exists
 mkdir -p "$DATA_DIR"
 
-# Only run chown if fresh datadir
+# If directory is empty or fresh, fix ownership + perms
 if [ ! -d "$DATA_DIR/blocks" ]; then
-    echo "Fixing ownership of DATA_DIR ..."
+    echo "Initializing data dir ownership and permissions..."
     chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
+    chmod "$DATA_PERM" "$DATA_DIR"
 fi
 
 # If no command was specified → default = bitcoind
