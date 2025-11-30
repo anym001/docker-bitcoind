@@ -27,7 +27,7 @@ docker run -d \
   --name bitcoind \
   -e PUID=1000 \
   -e PGID=1000 \
-  -e UMASK=0002 \
+  -e UMASK=002 \
   -e DATA_PERM=2770 \
   -e DATA_DIR=/home/bitcoin/.bitcoin \
   -e BITCOIND_EXTRA_ARGS="-txindex=1 -listen=1" \
@@ -65,8 +65,8 @@ If no config exists, Bitcoin Core will run with defaults.
 | :----------------- | :----------------------------------------------------- |
 | PUID               | Container user UID (maps to host UID). Optional.       |
 | PGID               | Container group GID (maps to host GID). Optional.      |
-| UMASK              | Default file creation mask inside the container. Must be octal (e.g. 0000, 0022, 0077). |
-| DATA_PERM          | Permission mode applied to the data directory. Default: 2770. |
+| UMASK              | Default file creation mask inside the container. Default: 002 |
+| DATA_PERM          | Permission mode applied to the data directory. Default: 2770 |
 | DATA_DIR           | Path to the Bitcoin data directory inside the container. Default: /home/bitcoin/.bitcoin |
 | BITCOIND_EXTRA_ARGS | Additional arguments appended to the bitcoind command. |
 
