@@ -23,18 +23,14 @@ fi
 # Ensure datadir exists
 mkdir -p "$DATA_DIR"
 
-# If directory is empty or fresh, fix ownership + perms
-if [ ! -d "$DATA_DIR/blocks" ]; then
-    echo "Initializing DATA_DIR ownership and permissions..."
+# Fix ownership if empty or ownership mismatch
+CURRENT_UID=$(stat -c %u "$DATA_DIR")
+CURRENT_GID=$(stat -c %g "$DATA_DIR")
+
+if [ -z "$(ls -A "$DATA_DIR")" ] || [ "$CURRENT_UID" != "$TARGET_UID" ] || [ "$CURRENT_GID" != "$TARGET_GID" ]; then
+    echo "Fixing ownership and permissions of DATA_DIR..."
     chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
     chmod "$DATA_PERM" "$DATA_DIR"
-fi
-
-# If UID change, fix ownership
-CURRENT_UID=$(stat -c %u "$DATA_DIR")
-if [ "$CURRENT_UID" != "$TARGET_UID" ]; then
-    echo "Fixing ownership of DATA_DIR (UID mismatch) ..."
-    chown -R "$TARGET_UID:$TARGET_GID" "$DATA_DIR"
 fi
 
 # If no command was specified → default = bitcoind
