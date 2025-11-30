@@ -11,7 +11,9 @@ RUN apt-get update \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -d ${DATA_DIR} -s /usr/sbin/nologin ${APP_USER} \
+RUN useradd -d ${DATA_DIR} -s /usr/sbin/nologin ${APP_USER} \
+	&& mkdir -p ${DATA_DIR} \
+	&& chown -R ${APP_USER}:${APP_USER} ${DATA_DIR} \
     && chmod ${DATA_PERM} ${DATA_DIR}
 
 COPY bin/ /usr/local/bin/
