@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Apply umask
-umask "${UMASK:-0000}"
+umask "${UMASK:-022}"
 
 # Resolve target uid/gid
 TARGET_UID="${PUID:-$(id -u "$APP_USER")}"
