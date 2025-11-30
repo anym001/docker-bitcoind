@@ -2,10 +2,9 @@ FROM debian:stable-slim
 
 ENV APP_USER=bitcoin \
     DATA_DIR=/home/bitcoin/.bitcoin \
-    START_PARAMS="" \
-    UMASK=002 \
     DATA_PERM=0770 \
-    BITCOIN_EXTRA_ARGS=""
+    UMASK=002 \
+    BITCOIND_EXTRA_ARGS=""
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates gosu bash \
