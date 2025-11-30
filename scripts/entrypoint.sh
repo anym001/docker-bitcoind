@@ -44,8 +44,8 @@ if [[ "${1:0:1}" == "-" ]]; then
 fi
 
 # Append extra args
-if [ -n "${BITCOIN_EXTRA_ARGS:-}" ]; then
-    set -- "$@" ${BITCOIN_EXTRA_ARGS}
+if [ -n "${BITCOIND_EXTRA_ARGS:-}" ]; then
+    set -- "$@" ${BITCOIND_EXTRA_ARGS}
 fi
 
 echo "Starting bitcoind as UID:$TARGET_UID GID:$TARGET_GID"
