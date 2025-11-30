@@ -27,7 +27,7 @@ docker run -d \
   --name bitcoind \
   -e PUID=1000 \
   -e PGID=1000 \
-  -e BITCOIN_EXTRA_ARGS="-txindex=1 -listen=1" \
+  -e BITCOIND_EXTRA_ARGS="-txindex=1 -listen=1" \
   -v /your/data/dir:/home/bitcoin/.bitcoin \
   -p 8333:8333 \
   -p 8332:8332 \
@@ -63,7 +63,7 @@ If no config exists, Bitcoin Core will run with defaults.
 | PUID               | Container user UID (maps to host UID). Optional.       |
 | PGID               | Container group GID (maps to host). Optional.          |
 | UMASK              | Default file creation mask inside the container.       |
-| BITCOIN_EXTRA_ARGS | Additional arguments appended to the bitcoind command. |
+| BITCOIND_EXTRA_ARGS | Additional arguments appended to the bitcoind command. |
 
 ## 🔒 Security
 
