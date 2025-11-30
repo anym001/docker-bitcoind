@@ -3,7 +3,7 @@ FROM debian:stable-slim
 ENV APP_USER=bitcoin \
     DATA_DIR=/home/bitcoin/.bitcoin \
     DATA_PERM=2770 \
-    UMASK=002 \
+    UMASK=0002 \
     BITCOIND_EXTRA_ARGS=""
 
 RUN apt-get update \
