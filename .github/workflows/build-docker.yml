@@ -107,8 +107,6 @@ jobs:
           tag_name: ${{ steps.versions.outputs.VERSION }}
           name: "Bitcoin Core Docker ${{ steps.versions.outputs.VERSION }}"
           body: |
-            ## Bitcoin Core Docker ${{ steps.versions.outputs.VERSION }}
-      
             This Docker image is built from the official Bitcoin Core source for version **${{ steps.versions.outputs.VERSION }}**.
       
             🔗 **Official Bitcoin Core Release Notes**  
