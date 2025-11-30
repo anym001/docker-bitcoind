@@ -3,7 +3,7 @@ FROM debian:stable-slim
 ENV APP_USER=bitcoin \
     DATA_DIR=/home/bitcoin/.bitcoin \
     START_PARAMS="" \
-    UMASK=0000 \
+    UMASK=002 \
     DATA_PERM=0770 \
     BITCOIN_EXTRA_ARGS=""
 
