@@ -61,7 +61,7 @@ if [ -z "$(ls -A "$FINAL_DATADIR")" ] || \
    [ "$CURRENT_GID" != "$TARGET_GID" ]; then
     echo "Fixing ownership and permissions of DATA_DIR..."
     chown -R "$TARGET_UID:$TARGET_GID" "$FINAL_DATADIR"
-    chmod "$(( 8#$DATA_PERM ))" "$FINAL_DATADIR"
+    chmod "$DATA_PERM" "$FINAL_DATADIR"
     chmod g+s "$FINAL_DATADIR"
 fi
 
