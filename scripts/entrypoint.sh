@@ -92,6 +92,7 @@ fi
 echo "-----------------------------------------------"
 echo "Starting bitcoind as UID:$TARGET_UID GID:$TARGET_GID"
 echo "Using DATA_DIR: $FINAL_DATADIR"
+echo "Command: $*"
 echo "-----------------------------------------------"
 
 exec gosu "$TARGET_UID:$TARGET_GID" "$@"
