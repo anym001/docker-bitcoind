@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "-----------------------------------------------"
-echo "Initializing bitcoind container
+echo "Initializing bitcoind container"
 echo "-----------------------------------------------"
 
 # Apply umask
