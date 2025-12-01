@@ -28,7 +28,6 @@ docker run -d \
   -e PUID=1000 \
   -e PGID=1000 \
   -e UMASK=002 \
-  -e DATA_PERM=2770 \
   -e BITCOIND_EXTRA_ARGS="-txindex=1 -listen=1" \
   -v /your/data/dir:/home/bitcoin/.bitcoin \
   -p 8333:8333 \
