@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "-----------------------------------------------"
+echo "Initializing bitcoind container
+echo "-----------------------------------------------"
+
 # Apply umask
 umask "${UMASK:-022}"
 
