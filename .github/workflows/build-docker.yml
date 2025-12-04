@@ -82,7 +82,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push Docker images (version tags)
+      - name: Build & push Docker images
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -91,16 +91,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:${{ steps.versions.outputs.SHORT_VERSION }}
             ghcr.io/${{ github.repository }}:${{ steps.versions.outputs.MAJOR_VERSION }}-stable
-
-      - name: Build & push Docker image (latest)
-        if: ${{ steps.versions.outputs.LATEST == 'true' }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
+            ${{ steps.versions.outputs.LATEST == 'true' && format('ghcr.io/{0}:latest', github.repository) || '' }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
