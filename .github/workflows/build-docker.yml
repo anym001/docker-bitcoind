@@ -9,6 +9,7 @@ on:
       LATEST:
         description: 'Set to true to tag this image as latest'
         required: true
+        default: "true"
 
 jobs:
   build:
