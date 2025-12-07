@@ -56,6 +56,7 @@ Inside the container this becomes:
 ```
 
 Example:
+
 ```
 server=1
 daemon=0
@@ -74,13 +75,13 @@ If no config exists, Bitcoin Core will run with defaults.
 
 ## 🔧 Environment Variables
 
-| Variable           | Description                                            |
-| :----------------- | :----------------------------------------------------- |
-| PUID               | Container user UID (maps to host UID). Optional.       |
-| PGID               | Container group GID (maps to host GID). Optional.      |
-| UMASK              | Default file creation mask inside the container. Default: 002 |
-| DATA_PERM          | Permission mode applied to the data directory. Default: 2770 |
-| BITCOIND_EXTRA_ARGS | Additional arguments appended to the bitcoind command. |
+| Variable            | Description                                                   |
+| :------------------ | :------------------------------------------------------------ |
+| PUID                | Container user UID (maps to host UID). Optional.              |
+| PGID                | Container group GID (maps to host GID). Optional.             |
+| UMASK               | Default file creation mask inside the container. Default: 002 |
+| DATA_PERM           | Permission mode applied to the data directory. Default: 2770  |
+| BITCOIND_EXTRA_ARGS | Additional arguments appended to the bitcoind command.        |
 
 ## 🔒 Security
 
