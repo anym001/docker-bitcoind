@@ -55,6 +55,21 @@ Inside the container this becomes:
 /home/bitcoin/.bitcoin/bitcoin.conf
 ```
 
+Example:
+```
+server=1
+daemon=0
+
+# RPC
+listen=1
+rpcallowip=0.0.0.0/0
+rpcbind=0.0.0.0
+
+# ZMQ
+zmqpubrawblock=tcp://0.0.0.0:28332
+zmqpubrawtx=tcp://0.0.0.0:28333
+```
+
 If no config exists, Bitcoin Core will run with defaults.
 
 ## 🔧 Environment Variables
