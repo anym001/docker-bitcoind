@@ -25,6 +25,6 @@ COPY scripts/ /opt/scripts/
 RUN chown -R root:root /opt/scripts \
     && chmod -R 0755 /opt/scripts/
 
-EXPOSE 8333 8332
+EXPOSE 8332 8333
 
 ENTRYPOINT ["/opt/scripts/entrypoint.sh"]
