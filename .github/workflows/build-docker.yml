@@ -57,15 +57,20 @@ jobs:
       - name: Import builder keys
         run: |
           git clone --depth 1 https://github.com/bitcoin-core/guix.sigs.git
-          gpg --import guix.sigs/builder-keys/* || true
+          gpg --import guix.sigs/builder-keys/* 2>&1 || true
+          IMPORTED=$(gpg --list-keys 2>/dev/null | grep -c "^pub" || echo 0)
+          if [ "$IMPORTED" -eq 0 ]; then
+            echo "ERROR: No GPG keys imported. Cannot verify signatures."
+            exit 1
+          fi
+          echo "Imported $IMPORTED GPG builder key(s)."
 
       - name: Verify signatures
         run: gpg --verify SHA256SUMS.asc SHA256SUMS
 
       - name: Verify checksum
         run: |
-          grep "${{ steps.versions.outputs.ASSET }}" SHA256SUMS > CHECK_THIS
-          sha256sum -c CHECK_THIS --ignore-missing
+          grep "${{ steps.versions.outputs.ASSET }}" SHA256SUMS | sha256sum -c -
 
       - name: Extract binaries
         run: |
