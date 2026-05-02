@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
-      id-token: write
 
     steps:
       - name: Checkout
@@ -27,19 +25,19 @@ jobs:
       - name: Get official releases and current releases
         id: versions
         run: |
-          OFFICIAL_VERSIONS=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases \
+          OFFICIAL_VERSIONS=$(curl -s "https://api.github.com/repos/bitcoin/bitcoin/releases?per_page=100" \
             | jq -r '.[].tag_name' \
-            | grep -E '^v(2[8-9]|[3-9][0-9])\.[0-9]+$' \
+            | grep -E '^v(2[8-9]|[3-9][0-9])\.[0-9]+(\.[0-9]+)?$' \
             | grep -vE 'rc[0-9]+$' \
             | sed 's/^v//' \
             | sort -V \
             | tr '\n' ' ')
 
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/bitcoin/bitcoin/releases/latest \
+          LATEST_VERSION=$(curl -s "https://api.github.com/repos/bitcoin/bitcoin/releases/latest" \
             | jq -r '.tag_name' \
             | sed 's/^v//')
 
-          CURRENT_VERSIONS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases \
+          CURRENT_VERSIONS=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" \
             | jq -r '.[].tag_name' \
             | sed 's/^v//' \
             | sort -V \
