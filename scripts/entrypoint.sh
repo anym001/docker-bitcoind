@@ -29,7 +29,18 @@ fi
 
 FINAL_DATADIR="$DATA_DIR"
 
-# Check CLI-Parameter: -datadir=/pfad
+# Check bitcoin.conf first (lower priority than CLI)
+CONF_FILE="${APP_USER_HOME}/.bitcoin/bitcoin.conf"
+if [ -f "$CONF_FILE" ]; then
+    # Simple key=value parsing, ignores spaces around =
+    CONF_DATADIR=$(grep -E '^\s*datadir\s*=' "$CONF_FILE" | tail -n1 | sed -E 's/^\s*datadir\s*=\s*//' || true)
+    if [ -n "$CONF_DATADIR" ]; then
+        FINAL_DATADIR="$CONF_DATADIR"
+        echo "Detected datadir override from bitcoin.conf → $FINAL_DATADIR"
+    fi
+fi
+
+# CLI argument overrides bitcoin.conf (highest priority)
 for arg in "$@"; do
     if [[ "$arg" == -datadir=* ]]; then
         FINAL_DATADIR="${arg#-datadir=}"
@@ -37,17 +48,6 @@ for arg in "$@"; do
         break
     fi
 done
-
-# Check bitcoin.conf
-CONF_FILE="${APP_USER_HOME}/.bitcoin/bitcoin.conf"
-if [ -f "$CONF_FILE" ]; then
-    # grep simple key=value parsing (ignores spaces around =)
-    CONF_DATADIR=$(grep -E '^\s*datadir\s*=' "$CONF_FILE" | tail -n1 | sed -E 's/^\s*datadir\s*=\s*//' || true)
-    if [ -n "$CONF_DATADIR" ]; then
-        FINAL_DATADIR="$CONF_DATADIR"
-        echo "Detected datadir override from bitcoin.conf → $FINAL_DATADIR"
-    fi
-fi
 
 # Ensure datadir exists
 mkdir -p "$FINAL_DATADIR"
