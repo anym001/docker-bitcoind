@@ -25,9 +25,10 @@ jobs:
 
       - name: Set version variables
         id: versions
+        env:
+          VERSION: ${{ github.event.inputs.VERSION }}
+          LATEST: ${{ github.event.inputs.LATEST }}
         run: |
-          VERSION="${{ github.event.inputs.VERSION }}"
-          LATEST="${{ github.event.inputs.LATEST }}"
           SHORT_VERSION="${VERSION#v}"
           MAJOR_VERSION="${SHORT_VERSION%%.*}"
 
@@ -45,16 +46,19 @@ jobs:
           sudo apt-get install -y gnupg curl xz-utils tar coreutils
 
       - name: Download Bitcoin Core binaries
+        env:
+          SHORT_VERSION: ${{ steps.versions.outputs.SHORT_VERSION }}
+          ASSET: ${{ steps.versions.outputs.ASSET }}
         run: |
-          BASE="https://bitcoincore.org/bin/bitcoin-core-${{ steps.versions.outputs.SHORT_VERSION }}"
-          curl -fSL -O ${BASE}/${{ steps.versions.outputs.ASSET }}
-          curl -fSL -O ${BASE}/SHA256SUMS
-          curl -fSL -O ${BASE}/SHA256SUMS.asc
+          BASE="https://bitcoincore.org/bin/bitcoin-core-${SHORT_VERSION}"
+          curl -fSL -O "${BASE}/${ASSET}"
+          curl -fSL -O "${BASE}/SHA256SUMS"
+          curl -fSL -O "${BASE}/SHA256SUMS.asc"
 
       - name: Import builder keys
         run: |
           git clone --depth 1 https://github.com/bitcoin-core/guix.sigs.git
-          gpg --import guix.sigs/builder-keys/* 2>&1 || true
+          gpg --import guix.sigs/builder-keys/* 2>&1
           IMPORTED=$(gpg --list-keys 2>/dev/null | grep -c "^pub" || echo 0)
           if [ "$IMPORTED" -eq 0 ]; then
             echo "ERROR: No GPG keys imported. Cannot verify signatures."
@@ -63,16 +67,27 @@ jobs:
           echo "Imported $IMPORTED GPG builder key(s)."
 
       - name: Verify signatures
-        run: gpg --verify SHA256SUMS.asc SHA256SUMS
+        run: |
+          gpg --verify SHA256SUMS.asc SHA256SUMS 2>&1 | tee gpg_verify_output.txt || true
+          VALID_SIGS=$(grep -c "^gpg: Good signature" gpg_verify_output.txt)
+          if [ "$VALID_SIGS" -lt 3 ]; then
+            echo "ERROR: Nur $VALID_SIGS gültige Signatur(en) gefunden. Mindestens 3 erforderlich."
+            exit 1
+          fi
+          echo "$VALID_SIGS gültige Signaturen verifiziert."
 
       - name: Verify checksum
+        env:
+          ASSET: ${{ steps.versions.outputs.ASSET }}
         run: |
-          grep "${{ steps.versions.outputs.ASSET }}" SHA256SUMS | sha256sum -c -
+          grep "$ASSET" SHA256SUMS | sha256sum -c -
 
       - name: Extract binaries
+        env:
+          ASSET: ${{ steps.versions.outputs.ASSET }}
         run: |
           mkdir -p bin
-          tar -xzf ${{ steps.versions.outputs.ASSET }} --strip-components=2 -C bin
+          tar -xzf "$ASSET" --strip-components=2 -C bin
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
