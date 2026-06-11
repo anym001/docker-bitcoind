@@ -15,6 +15,12 @@ APP_USER_HOME="${APP_USER_HOME:-/home/$APP_USER}"
 TARGET_UID="${PUID:-$(id -u "$APP_USER")}"
 TARGET_GID="${PGID:-$(id -g "$APP_USER")}"
 
+# Validate that PUID/PGID are integers
+if ! [[ "$TARGET_UID" =~ ^[0-9]+$ ]] || ! [[ "$TARGET_GID" =~ ^[0-9]+$ ]]; then
+    echo "Error: PUID and PGID must be integers (got PUID='$TARGET_UID' PGID='$TARGET_GID')" >&2
+    exit 1
+fi
+
 # Update group if needed
 if [ "$(id -g "$APP_USER")" != "$TARGET_GID" ]; then
     echo "Updating GID → $TARGET_GID"
@@ -88,9 +94,10 @@ if [ "$HAS_DATADIR_FLAG" = false ]; then
     set -- "$@" -datadir="$FINAL_DATADIR"
 fi
 
-# Append extra args from BITCOIND_EXTRA_ARGS (split on whitespace as usual shell)
+# Append extra args from BITCOIND_EXTRA_ARGS (safe word-splitting, no glob expansion)
 if [ -n "${BITCOIND_EXTRA_ARGS:-}" ]; then
-    set -- "$@" $BITCOIND_EXTRA_ARGS
+    IFS=' ' read -ra _extra_args <<< "$BITCOIND_EXTRA_ARGS"
+    set -- "$@" "${_extra_args[@]}"
 fi
 
 echo "-----------------------------------------------"

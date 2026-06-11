@@ -17,11 +17,10 @@ jobs:
     permissions:
       contents: write
       packages: write
-      id-token: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Set version variables
         id: versions
@@ -68,13 +67,15 @@ jobs:
 
       - name: Verify signatures
         run: |
+          # gpg returns non-zero when some signatures use unknown keys (expected);
+          # capture output unconditionally and check the valid count below.
           gpg --verify SHA256SUMS.asc SHA256SUMS 2>&1 | tee gpg_verify_output.txt || true
-          VALID_SIGS=$(grep -c "^gpg: Good signature" gpg_verify_output.txt)
+          VALID_SIGS=$(grep -c "^gpg: Good signature" gpg_verify_output.txt || echo 0)
           if [ "$VALID_SIGS" -lt 3 ]; then
-            echo "ERROR: Nur $VALID_SIGS gültige Signatur(en) gefunden. Mindestens 3 erforderlich."
+            echo "ERROR: Only $VALID_SIGS valid signature(s) found. At least 3 required."
             exit 1
           fi
-          echo "$VALID_SIGS gültige Signaturen verifiziert."
+          echo "$VALID_SIGS valid signatures verified."
 
       - name: Verify checksum
         env:
@@ -90,17 +91,17 @@ jobs:
           tar -xzf "$ASSET" --strip-components=2 -C bin
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Login to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & push Docker images
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: ./Dockerfile
@@ -111,15 +112,15 @@ jobs:
             ${{ steps.versions.outputs.LATEST == 'true' && format('ghcr.io/{0}:latest', github.repository) || '' }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: ${{ steps.versions.outputs.VERSION }}
           name: "Bitcoin Core Docker ${{ steps.versions.outputs.VERSION }}"
           body: |
             This Docker image is built from the official Bitcoin Core source for version **${{ steps.versions.outputs.VERSION }}**.
-      
-            🔗 **Official Bitcoin Core Release Notes**  
+
+            **Official Bitcoin Core Release Notes**
             https://bitcoincore.org/en/releases/${{ steps.versions.outputs.SHORT_VERSION }}/
-      
+
             ---
-            Built automatically from upstream Bitcoin Core releases. ✔️
+            Built automatically from upstream Bitcoin Core releases.
