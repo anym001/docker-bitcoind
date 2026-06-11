@@ -7,7 +7,16 @@ All binaries are verified using the official SHA256SUMS and signed checksums.
 The workflow automatically detects new releases from bitcoin/bitcoin and triggers the Docker build.
 The latest tag is set only for the newest official release.
 
-## 🚀 Usage
+## Contents
+
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Environment Variables](#environment-variables)
+- [Security](#security)
+- [Automated Build System](#automated-build-system)
+- [Contributing](#contributing)
+
+## Usage
 
 Minimal example:
 
@@ -37,13 +46,13 @@ docker run -d \
 
 Tags:
 
-- `<version>` → e.g., 29.2, 30.0 (always built for each release)
-- `<version>-stable` → e.g., 29-stable, 30-stable
-- `latest` → points to the latest official release
+- `<version>` — e.g., 29.2, 30.0 (always built for each release)
+- `<version>-stable` — e.g., 29-stable, 30-stable
+- `latest` — points to the latest official release
 
-## ⚙️ Configuration
+## Configuration
 
-If you want custom configuration, place a bitcoin.conf file inside your mounted directory:
+If you want custom configuration, place a `bitcoin.conf` file inside your mounted directory:
 
 ```
 /your/data/dir/bitcoin.conf
@@ -73,45 +82,41 @@ zmqpubrawtx=tcp://0.0.0.0:28333
 
 If no config exists, Bitcoin Core will run with defaults.
 
-## 🔧 Environment Variables
+## Environment Variables
 
 | Variable            | Description                                                   |
 | :------------------ | :------------------------------------------------------------ |
-| PUID                | Container user UID (maps to host UID). Optional.              |
-| PGID                | Container group GID (maps to host GID). Optional.             |
-| UMASK               | Default file creation mask inside the container. Default: 002 |
-| DATA_PERM           | Permission mode applied to the data directory. Default: 2770  |
-| BITCOIND_EXTRA_ARGS | Additional arguments appended to the bitcoind command.        |
+| `PUID`              | Container user UID (maps to host UID). Optional.              |
+| `PGID`              | Container group GID (maps to host GID). Optional.             |
+| `UMASK`             | Default file creation mask inside the container. Default: 002 |
+| `DATA_PERM`         | Permission mode applied to the data directory. Default: 2770  |
+| `BITCOIND_EXTRA_ARGS` | Additional arguments appended to the bitcoind command.      |
 
-## 🔒 Security
+## Security
 
 This image is designed with safety in mind:
 
-- Runs as non-root user bitcoin
-- Uses minimal base image (debian:stable-slim)
+- Runs as non-root user `bitcoin`
+- Uses minimal base image (`debian:stable-slim`)
 - Binaries are GPG-verified using the official Guix builder keys
 - No unnecessary packages installed
-- Ensures safe access to the mounted volume using:
-  - PUID
-  - PGID
-  - UMASK
+- Ensures safe access to the mounted volume using `PUID`, `PGID`, and `UMASK`
 
-## 🏗️ Automated Build System
+## Automated Build System
 
-1. release-check.yml workflow:
-
+1. `release-check.yml` workflow:
    - Checks all official Bitcoin Core releases
    - Determines which releases are missing in your repo
-   - Triggers build-docker.yml for missing releases
-   - Passes LATEST=true for the newest release
+   - Triggers `build-docker.yml` for missing releases
+   - Passes `LATEST=true` for the newest release
 
-2. build-docker.yml workflow:
+2. `build-docker.yml` workflow:
    - Downloads official binaries and verifies SHA256 + PGP signatures
-   - Extracts required binaries (bitcoind, bitcoin-cli)
+   - Extracts required binaries (`bitcoind`, `bitcoin-cli`)
    - Builds and pushes Docker images to GHCR
    - Creates a GitHub Release for each version
 
-## 🤝 Contributing
+## Contributing
 
 PRs are welcome, especially improvements to:
 
