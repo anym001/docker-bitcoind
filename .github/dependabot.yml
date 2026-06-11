@@ -4,3 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Bundle every github-actions update into a single weekly PR instead of
+    # one PR per action. Avoids the mutual merge conflicts that separate PRs
+    # cause once the first one lands (each touches the same pinned-SHA lines
+    # in the workflow files).
+    groups:
+      github-actions:
+        patterns:
+          - "*"
