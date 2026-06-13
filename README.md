@@ -30,7 +30,7 @@ docker run -d \
   -v /your/data/dir:/home/bitcoin/.bitcoin \
   -p 8333:8333 \
   -p 8332:8332 \
-  ghcr.io/anyp001/docker-bitcoind:<version>
+  ghcr.io/anym001/docker-bitcoind:<version>
 ```
 
 With permissions mapping and extra args:
@@ -45,7 +45,7 @@ docker run -d \
   -v /your/data/dir:/home/bitcoin/.bitcoin \
   -p 8333:8333 \
   -p 8332:8332 \
-  ghcr.io/anyp001/docker-bitcoind:<version>
+  ghcr.io/anym001/docker-bitcoind:<version>
 ```
 
 Tags:
@@ -129,3 +129,14 @@ PRs are welcome, especially improvements to:
 - Enhancing testing or verification
 - Image signing and supply-chain security
 - Documentation
+
+## License
+
+The contents of this repository (Dockerfile, scripts, and workflows) are
+licensed under the [MIT License](LICENSE).
+
+This project only packages Bitcoin Core into Docker images; the upstream
+source code is not modified or redistributed in this repository.
+[Bitcoin Core](https://github.com/bitcoin/bitcoin) is distributed under its
+own MIT license, and all upstream copyrights and trademarks remain with their
+respective owners.
