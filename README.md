@@ -140,3 +140,7 @@ source code is not modified or redistributed in this repository.
 [Bitcoin Core](https://github.com/bitcoin/bitcoin) is distributed under its
 own MIT license, and all upstream copyrights and trademarks remain with their
 respective owners.
+
+---
+
+Built with [Claude Code](https://claude.com/claude-code).
