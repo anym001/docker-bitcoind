@@ -1,0 +1,46 @@
+name: Bug report
+description: Report a problem with the Bitcoind Docker image
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. Please fill out the
+        sections below. Redact any secrets (RPC credentials, cookies) before
+        pasting logs or config.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. docker run ...
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Image tag
+      placeholder: "e.g. v28.0 / 28-stable / latest"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Host OS, Docker / Compose version, deployment (CLI / Compose / Unraid / Portainer), PUID/PGID/UMASK, BITCOIND_EXTRA_ARGS.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste relevant container log output. Redact secrets.
+      render: shell
