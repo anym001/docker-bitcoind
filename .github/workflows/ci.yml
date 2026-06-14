@@ -42,73 +42,88 @@ jobs:
           fail_on_error: true
 
   smoke:
-    # Build the image and boot it the way an Unraid user would (PUID/PGID
-    # 99:100) to prove the entrypoint contract: it validates PUID/PGID, creates
-    # and chowns the data dir, and drops privileges via gosu before exec'ing
-    # bitcoind. A stub `bitcoind` is injected so the test exercises *our*
-    # wrapper (entrypoint + Dockerfile COPY/permissions), not Bitcoin Core
-    # itself — keeping it fast and deterministic with no multi-hundred-MB
-    # download. The real binaries are downloaded and verified (checksum + Guix
-    # signatures) in build-docker.yml at release time.
+    # Build the image with the *real* Bitcoin Core binaries and boot the actual
+    # daemon in regtest, the way an Unraid user would (PUID/PGID 99:100). This
+    # proves end to end that the published image is runnable: the entrypoint
+    # validates PUID/PGID, creates and chowns the data dir, drops privileges via
+    # gosu, and the real bitcoind comes up and answers RPC. (build-docker.yml
+    # still does the full checksum + Guix-signature verification at release
+    # time; here we checksum-verify the download — enough for a boot smoke.)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
-      - name: Inject stub bitcoind
-        # The real bin/ is populated from the official release tarball in
-        # build-docker.yml. For the wrapper smoke a tiny stand-in is enough: it
-        # records the runtime uid/gid into the data dir (proving the gosu drop)
-        # and otherwise idles so the container stays up.
+      - name: Resolve Bitcoin Core version to build
+        id: btc
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Fallback for the very first build, before this repo has any release.
+          FALLBACK_VERSION: v31.0
         run: |
+          # Build the last version THIS repo released — i.e. the latest
+          # known-good Bitcoin Core tag. release-check.yml keeps that in sync
+          # with upstream daily, so the smoke auto-tracks new releases without a
+          # manual bump.
+          tag=$(curl -fsSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/latest" \
+            | jq -r '.tag_name // empty')
+          if [ -z "$tag" ]; then tag="$FALLBACK_VERSION"; fi
+          short="${tag#v}"
+          echo "Building Bitcoin Core $short"
+          echo "short=$short" >> "$GITHUB_OUTPUT"
+
+      - name: Download and verify Bitcoin Core binaries
+        env:
+          SHORT_VERSION: ${{ steps.btc.outputs.short }}
+        run: |
+          base="https://bitcoincore.org/bin/bitcoin-core-${SHORT_VERSION}"
+          asset="bitcoin-${SHORT_VERSION}-x86_64-linux-gnu.tar.gz"
+          curl -fSL -O "${base}/${asset}"
+          curl -fSL -O "${base}/SHA256SUMS"
+          grep "  ${asset}\$" SHA256SUMS | sha256sum -c -
           mkdir -p bin
-          cat > bin/bitcoind <<'EOF'
-          #!/usr/bin/env bash
-          set -euo pipefail
-          datadir=""
-          for arg in "$@"; do
-            case "$arg" in -datadir=*) datadir="${arg#-datadir=}" ;; esac
-          done
-          if [ -n "$datadir" ]; then
-            id -u > "$datadir/.runtime-uid"
-            id -g > "$datadir/.runtime-gid"
-          fi
-          case "${1:-}" in
-            -version|--version) echo "stub bitcoind"; exit 0 ;;
-          esac
-          exec sleep infinity
-          EOF
-          chmod +x bin/bitcoind
+          tar -xzf "$asset" --strip-components=2 -C bin
 
       - name: Build image
         run: docker build -t bitcoind:ci .
 
-      - name: Run container (PUID/PGID 99:100)
+      - name: Boot the real daemon (regtest, PUID/PGID 99:100)
         run: |
           mkdir -p data
           docker run -d --name btc \
             -e PUID=99 -e PGID=100 \
             -v "$PWD/data:/home/bitcoin/.bitcoin" \
-            bitcoind:ci
+            bitcoind:ci \
+            -regtest -server -rpcuser=ci -rpcpassword=ci -fallbackfee=0.0002
 
-      - name: Wait for entrypoint to drop privileges
+      - name: Wait for RPC and assert the chain is up
         run: |
           for _ in $(seq 1 30); do
-            if [ -f data/.runtime-uid ]; then echo "entrypoint reached bitcoind"; exit 0; fi
-            sleep 1
+            if docker exec btc bitcoin-cli -regtest -rpcuser=ci -rpcpassword=ci \
+                 getblockchaininfo > info.json 2>/dev/null; then
+              cat info.json
+              chain=$(jq -r '.chain' info.json)
+              [ "$chain" = "regtest" ] || { echo "unexpected chain: $chain"; exit 1; }
+              echo "real bitcoind is up on regtest"
+              exit 0
+            fi
+            sleep 2
           done
-          echo "stub bitcoind never ran"; docker logs btc; exit 1
+          echo "bitcoind RPC never came up"; docker logs btc; exit 1
 
-      - name: Assert data dir ownership and gosu drop
+      - name: Assert data dir ownership (gosu drop)
         run: |
           owner=$(stat -c '%u:%g' data)
           echo "data dir owner: $owner"
           [ "$owner" = "99:100" ] || { echo "expected 99:100"; docker logs btc; exit 1; }
-          ruid=$(cat data/.runtime-uid)
-          rgid=$(cat data/.runtime-gid)
-          echo "bitcoind ran as ${ruid}:${rgid}"
-          if [ "$ruid" != "99" ] || [ "$rgid" != "100" ]; then
-            echo "expected gosu drop to 99:100"; exit 1
-          fi
+          # The regtest subdir is created by the daemon *after* the drop, so its
+          # owner proves bitcoind itself runs as the dropped user, not just the
+          # entrypoint's chown.
+          sub=$(stat -c '%u:%g' data/regtest)
+          echo "regtest dir owner: $sub"
+          [ "$sub" = "99:100" ] || { echo "daemon did not run as 99:100"; exit 1; }
 
       - name: Assert PUID/PGID validation rejects non-integers
         run: |
