@@ -17,12 +17,10 @@ jobs:
   lint:
     # Static gates: ShellCheck on the entrypoint, Hadolint on the Dockerfile,
     # actionlint on the workflows. No image build, so this is fast feedback.
-    # Tools are fetched as pinned release binaries (not Docker Hub images) so
-    # the lint job never trips over anonymous registry pull-rate limits.
+    # Hadolint/actionlint run via SHA-pinned actions (both fetch from ghcr /
+    # release binaries, not Docker Hub) so Dependabot's github-actions group
+    # keeps them up to date in the same weekly PR as the other pinned actions.
     runs-on: ubuntu-latest
-    env:
-      HADOLINT_VERSION: v2.12.0
-      ACTIONLINT_VERSION: 1.7.7
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -31,18 +29,17 @@ jobs:
         run: shellcheck scripts/entrypoint.sh
 
       - name: Hadolint (Dockerfile)
-        # hadolint reads .hadolint.yaml from the repo root automatically.
-        run: |
-          curl -fsSL -o /usr/local/bin/hadolint \
-            "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
-          chmod +x /usr/local/bin/hadolint
-          hadolint Dockerfile
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
+        with:
+          dockerfile: Dockerfile
+          config: .hadolint.yaml
 
       - name: actionlint (workflows)
-        run: |
-          curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
-            | tar -xz actionlint
-          ./actionlint -color
+        uses: reviewdog/action-actionlint@144cce1f5f4aad4f36bfba866f46565ac2c93546 # v1.9.0
+        with:
+          reporter: local
+          filter_mode: nofilter
+          fail_on_error: true
 
   smoke:
     # Build the image and boot it the way an Unraid user would (PUID/PGID
