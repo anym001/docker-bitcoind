@@ -1,0 +1,127 @@
+name: ci
+
+# Fast PR gate for the wrapper itself: the entrypoint shell logic and the
+# Dockerfile. The publish workflow (build-docker.yml) calls this via
+# workflow_call so no image is released without green checks. There is no
+# `push` trigger — pushes to main land via merged PRs, which already ran here.
+on:
+  pull_request:
+  workflow_call:
+
+# Least privilege: only read the repo. The publishing job in build-docker.yml
+# grants its own write scopes on its own job, never through this file.
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    # Static gates: ShellCheck on the entrypoint, Hadolint on the Dockerfile,
+    # actionlint on the workflows. No image build, so this is fast feedback.
+    # Tools are fetched as pinned release binaries (not Docker Hub images) so
+    # the lint job never trips over anonymous registry pull-rate limits.
+    runs-on: ubuntu-latest
+    env:
+      HADOLINT_VERSION: v2.12.0
+      ACTIONLINT_VERSION: 1.7.7
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: ShellCheck (entrypoint)
+        # shellcheck is preinstalled on ubuntu-latest runners.
+        run: shellcheck scripts/entrypoint.sh
+
+      - name: Hadolint (Dockerfile)
+        # hadolint reads .hadolint.yaml from the repo root automatically.
+        run: |
+          curl -fsSL -o /usr/local/bin/hadolint \
+            "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          chmod +x /usr/local/bin/hadolint
+          hadolint Dockerfile
+
+      - name: actionlint (workflows)
+        run: |
+          curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz actionlint
+          ./actionlint -color
+
+  smoke:
+    # Build the image and boot it the way an Unraid user would (PUID/PGID
+    # 99:100) to prove the entrypoint contract: it validates PUID/PGID, creates
+    # and chowns the data dir, and drops privileges via gosu before exec'ing
+    # bitcoind. A stub `bitcoind` is injected so the test exercises *our*
+    # wrapper (entrypoint + Dockerfile COPY/permissions), not Bitcoin Core
+    # itself — keeping it fast and deterministic with no multi-hundred-MB
+    # download. The real binaries are downloaded and verified (checksum + Guix
+    # signatures) in build-docker.yml at release time.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Inject stub bitcoind
+        # The real bin/ is populated from the official release tarball in
+        # build-docker.yml. For the wrapper smoke a tiny stand-in is enough: it
+        # records the runtime uid/gid into the data dir (proving the gosu drop)
+        # and otherwise idles so the container stays up.
+        run: |
+          mkdir -p bin
+          cat > bin/bitcoind <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          datadir=""
+          for arg in "$@"; do
+            case "$arg" in -datadir=*) datadir="${arg#-datadir=}" ;; esac
+          done
+          if [ -n "$datadir" ]; then
+            id -u > "$datadir/.runtime-uid"
+            id -g > "$datadir/.runtime-gid"
+          fi
+          case "${1:-}" in
+            -version|--version) echo "stub bitcoind"; exit 0 ;;
+          esac
+          exec sleep infinity
+          EOF
+          chmod +x bin/bitcoind
+
+      - name: Build image
+        run: docker build -t bitcoind:ci .
+
+      - name: Run container (PUID/PGID 99:100)
+        run: |
+          mkdir -p data
+          docker run -d --name btc \
+            -e PUID=99 -e PGID=100 \
+            -v "$PWD/data:/home/bitcoin/.bitcoin" \
+            bitcoind:ci
+
+      - name: Wait for entrypoint to drop privileges
+        run: |
+          for _ in $(seq 1 30); do
+            if [ -f data/.runtime-uid ]; then echo "entrypoint reached bitcoind"; exit 0; fi
+            sleep 1
+          done
+          echo "stub bitcoind never ran"; docker logs btc; exit 1
+
+      - name: Assert data dir ownership and gosu drop
+        run: |
+          owner=$(stat -c '%u:%g' data)
+          echo "data dir owner: $owner"
+          [ "$owner" = "99:100" ] || { echo "expected 99:100"; docker logs btc; exit 1; }
+          ruid=$(cat data/.runtime-uid)
+          rgid=$(cat data/.runtime-gid)
+          echo "bitcoind ran as ${ruid}:${rgid}"
+          if [ "$ruid" != "99" ] || [ "$rgid" != "100" ]; then
+            echo "expected gosu drop to 99:100"; exit 1
+          fi
+
+      - name: Assert PUID/PGID validation rejects non-integers
+        run: |
+          # The entrypoint must refuse non-numeric PUID/PGID before doing any
+          # privileged work — a regression here would silently run as root.
+          if docker run --rm -e PUID=abc bitcoind:ci -version; then
+            echo "entrypoint accepted a non-integer PUID"; exit 1
+          fi
+          echo "non-integer PUID correctly rejected"
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f btc || true
