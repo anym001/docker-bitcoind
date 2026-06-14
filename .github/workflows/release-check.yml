@@ -44,9 +44,11 @@ jobs:
             exit 1
           fi
 
-          echo "OFFICIAL_VERSIONS=$OFFICIAL_VERSIONS" >> $GITHUB_OUTPUT
-          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          echo "CURRENT_VERSIONS=$CURRENT_VERSIONS" >> $GITHUB_OUTPUT
+          {
+            echo "OFFICIAL_VERSIONS=$OFFICIAL_VERSIONS"
+            echo "LATEST_VERSION=$LATEST_VERSION"
+            echo "CURRENT_VERSIONS=$CURRENT_VERSIONS"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Determine versions to build
         id: determine_builds
@@ -56,7 +58,7 @@ jobs:
         run: |
           VERSIONS_TO_BUILD=""
           for v in $OFFICIAL_VERSIONS; do
-            if [[ ! " $CURRENT_VERSIONS " =~ " $v " ]]; then
+            if [[ " $CURRENT_VERSIONS " != *" $v "* ]]; then
               VERSIONS_TO_BUILD="$VERSIONS_TO_BUILD $v"
             fi
           done
@@ -66,7 +68,7 @@ jobs:
             exit 0
           fi
 
-          echo "VERSIONS_TO_BUILD=$VERSIONS_TO_BUILD" >> $GITHUB_OUTPUT
+          echo "VERSIONS_TO_BUILD=$VERSIONS_TO_BUILD" >> "$GITHUB_OUTPUT"
 
       - name: Trigger builds for new versions
         env:

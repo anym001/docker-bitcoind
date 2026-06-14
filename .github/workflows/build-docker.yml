@@ -12,7 +12,13 @@ on:
         default: "true"
 
 jobs:
+  # Gate the release on the same checks PRs run (lint + wrapper smoke). A red
+  # ci means no image is published.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -30,14 +36,15 @@ jobs:
         run: |
           SHORT_VERSION="${VERSION#v}"
           MAJOR_VERSION="${SHORT_VERSION%%.*}"
-
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "LATEST=$LATEST" >> $GITHUB_OUTPUT
-          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_OUTPUT
-          echo "MAJOR_VERSION=$MAJOR_VERSION" >> $GITHUB_OUTPUT
-
           ASSET="bitcoin-${SHORT_VERSION}-x86_64-linux-gnu.tar.gz"
-          echo "ASSET=$ASSET" >> $GITHUB_OUTPUT
+
+          {
+            echo "VERSION=$VERSION"
+            echo "LATEST=$LATEST"
+            echo "SHORT_VERSION=$SHORT_VERSION"
+            echo "MAJOR_VERSION=$MAJOR_VERSION"
+            echo "ASSET=$ASSET"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: |
