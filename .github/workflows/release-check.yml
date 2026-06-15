@@ -20,8 +20,18 @@ jobs:
 
       - name: Get official releases and current releases
         id: versions
+        env:
+          # Authenticate the GitHub API reads. Unauthenticated calls share a
+          # 60 req/h-per-IP budget on shared runners and intermittently return
+          # a non-JSON error body, which made `jq` fail ("Invalid numeric
+          # literal" → "Can't fetch releases!"). The default GITHUB_TOKEN's
+          # contents:read scope is enough to read public release lists.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          OFFICIAL_VERSIONS=$(curl -s "https://api.github.com/repos/bitcoin/bitcoin/releases?per_page=100" \
+          OFFICIAL_VERSIONS=$(curl -s \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/bitcoin/bitcoin/releases?per_page=100" \
             | jq -r '.[].tag_name' \
             | grep -E '^v(2[8-9]|[3-9][0-9])\.[0-9]+(\.[0-9]+)?$' \
             | grep -vE 'rc[0-9]+$' \
@@ -29,11 +39,17 @@ jobs:
             | sort -V \
             | tr '\n' ' ')
 
-          LATEST_VERSION=$(curl -s "https://api.github.com/repos/bitcoin/bitcoin/releases/latest" \
+          LATEST_VERSION=$(curl -s \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/bitcoin/bitcoin/releases/latest" \
             | jq -r '.tag_name' \
             | sed 's/^v//')
 
-          CURRENT_VERSIONS=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" \
+          CURRENT_VERSIONS=$(curl -s \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" \
             | jq -r '.[].tag_name' \
             | sed 's/^v//' \
             | sort -V \
