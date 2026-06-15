@@ -25,6 +25,13 @@ The latest tag is set only for the newest official release.
 
 ## Usage
 
+Images are published to **GHCR** and **Docker Hub** — use whichever you prefer:
+
+```
+docker pull ghcr.io/anym001/docker-bitcoind:<version>
+docker pull anym001/docker-bitcoind:<version>      # Docker Hub
+```
+
 Minimal example:
 
 ```
