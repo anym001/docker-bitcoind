@@ -127,6 +127,15 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/docker-bitcoind:${{ steps.versions.outputs.MAJOR_VERSION }}-stable
             ${{ steps.versions.outputs.LATEST == 'true' && format('docker.io/{0}/docker-bitcoind:latest', secrets.DOCKERHUB_USERNAME) || '' }}
 
+      - name: Sync README to Docker Hub
+        uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4.0.2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/docker-bitcoind
+          readme-filepath: ./README.md
+          short-description: "Bitcoin Core in a minimal, signature-verified Docker image"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
