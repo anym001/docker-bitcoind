@@ -1,5 +1,6 @@
 # Bitcoind Docker Images
 
+[![Tests](https://img.shields.io/github/actions/workflow/status/anym001/docker-bitcoind/ci.yml?label=Tests)](https://github.com/anym001/docker-bitcoind/actions/workflows/ci.yml)
 [![Build](https://img.shields.io/github/actions/workflow/status/anym001/docker-bitcoind/build-docker.yml?label=Build)](https://github.com/anym001/docker-bitcoind/actions/workflows/build-docker.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/anym001/docker-bitcoind?label=Release)](https://github.com/anym001/docker-bitcoind/releases)
