@@ -2,7 +2,7 @@
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/anym001/docker-bitcoind/ci.yml?label=Tests)](https://github.com/anym001/docker-bitcoind/actions/workflows/ci.yml)
 [![Build](https://img.shields.io/github/actions/workflow/status/anym001/docker-bitcoind/build-docker.yml?label=Build)](https://github.com/anym001/docker-bitcoind/actions/workflows/build-docker.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/anym001/docker-bitcoind/blob/HEAD/LICENSE)
 [![Release](https://img.shields.io/github/v/release/anym001/docker-bitcoind?label=Release)](https://github.com/anym001/docker-bitcoind/releases)
 [![GHCR](https://img.shields.io/badge/GHCR-docker--bitcoind-2496ED?logo=docker&logoColor=white)](https://github.com/anym001/docker-bitcoind/pkgs/container/docker-bitcoind)
 
@@ -135,7 +135,7 @@ PRs are welcome, especially improvements to:
 ## License
 
 The contents of this repository (Dockerfile, scripts, and workflows) are
-licensed under the [MIT License](LICENSE).
+licensed under the [MIT License](https://github.com/anym001/docker-bitcoind/blob/HEAD/LICENSE).
 
 This project only packages Bitcoin Core into Docker images; the upstream
 source code is not modified or redistributed in this repository.
