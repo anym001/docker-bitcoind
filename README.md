@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/anym001/docker-bitcoind/blob/HEAD/LICENSE)
 [![Release](https://img.shields.io/github/v/release/anym001/docker-bitcoind?label=Release)](https://github.com/anym001/docker-bitcoind/releases)
 [![GHCR](https://img.shields.io/badge/GHCR-docker--bitcoind-2496ED?logo=docker&logoColor=white)](https://github.com/anym001/docker-bitcoind/pkgs/container/docker-bitcoind)
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-docker--bitcoind-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/anym001/docker-bitcoind)
 
 This repository provides automated, verified, and signed Docker images for Bitcoin Core (bitcoind).
 Images are built for all official releases starting from v28.0 and pushed to GitHub Container Registry (GHCR).
