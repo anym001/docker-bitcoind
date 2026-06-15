@@ -107,6 +107,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build & push Docker images
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
@@ -117,6 +123,9 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ steps.versions.outputs.SHORT_VERSION }}
             ghcr.io/${{ github.repository }}:${{ steps.versions.outputs.MAJOR_VERSION }}-stable
             ${{ steps.versions.outputs.LATEST == 'true' && format('ghcr.io/{0}:latest', github.repository) || '' }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/docker-bitcoind:${{ steps.versions.outputs.SHORT_VERSION }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/docker-bitcoind:${{ steps.versions.outputs.MAJOR_VERSION }}-stable
+            ${{ steps.versions.outputs.LATEST == 'true' && format('docker.io/{0}/docker-bitcoind:latest', secrets.DOCKERHUB_USERNAME) || '' }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
