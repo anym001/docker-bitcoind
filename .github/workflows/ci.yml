@@ -25,14 +25,14 @@ jobs:
     env:
       ACTIONLINT_VERSION: 1.7.7
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: ShellCheck (entrypoint)
         # shellcheck is preinstalled on ubuntu-latest runners.
         run: shellcheck scripts/entrypoint.sh
 
       - name: Hadolint (Dockerfile)
-        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
         with:
           dockerfile: Dockerfile
           config: .hadolint.yaml
@@ -53,7 +53,7 @@ jobs:
     # time; here we checksum-verify the download — enough for a boot smoke.)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Resolve Bitcoin Core version to build
         id: btc
