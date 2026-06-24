@@ -12,3 +12,13 @@ updates:
       github-actions:
         patterns:
           - "*"
+
+  # Base image bumps (debian:bookworm-slim …).
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      docker:
+        patterns:
+          - "*"
