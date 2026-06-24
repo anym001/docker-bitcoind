@@ -128,7 +128,7 @@ jobs:
             ${{ steps.versions.outputs.LATEST == 'true' && format('docker.io/{0}/docker-bitcoind:latest', secrets.DOCKERHUB_USERNAME) || '' }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ steps.versions.outputs.VERSION }}
           name: "Bitcoin Core Docker ${{ steps.versions.outputs.VERSION }}"
